@@ -107,7 +107,7 @@ while (true) do
 	local y = (memory.readbyte(0x0061)*blocksize)+areay;
 	local now = getPiece(memory.readbyte(0x0062)); -- get piece info
 	-- draw a nice box around it
-	gui.drawbox(95,40,175,200,"blue");
+	gui.drawbox(95,47,175,208,"blue");
 	gui.text(5,5,"xy: <"..x..", "..y..">");
 	if (now and x > 0 and y > 0 and x < 250 and y < 200) then
 		gui.drawbox(x+(now.rel[1][1]*blocksize),y+(now.rel[1][2]*blocksize),x+(now.rel[1][1]*blocksize)+blocksize,y+(now.rel[1][2]*blocksize)+blocksize,"green");
@@ -135,7 +135,14 @@ while (true) do
 	gui.text(5,30,"Height: "..height.."\nFilled: "..filled.." ("..math.floor(filled/(height)*10).."%)");
 
 
-	--local inp1 = joypad.read(1);
-	--joypad.set(1,{right=1});
+	local inp1 = joypad.read(1);
+    frame = emu.framecount();
+    if frame % 60 < 30 then
+            joypad.set(1, {down=true});
+    else
+            joypad.set(1, {down=false});
+    end
+    print(tostring( joypad.read(1).down ) );
+	-- joypad.set(1,{right=1});
 	FCEU.frameadvance();
 end;
