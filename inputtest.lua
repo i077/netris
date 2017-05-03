@@ -21,21 +21,21 @@ function makeMoves(movelist) --takes a list of chars
 
 	for i, move in ipairs(movelist) do
 		inputtable=blanktable;
-		if move == a then
+		if move == 'a' then
 			inputtable.A=true;
-		elseif move == b then
+		elseif move == 'b' then
 			inputtable.B=true;
-		elseif move == u then
+		elseif move == 'u' then
 			inputtable.up=true;
-		elseif move == d then
+		elseif move == 'd' then
 			inputtable.down=true;
-		elseif move == l then
+		elseif move == 'l' then
 			inputtable.left=true;
-		elseif move == r then
+		elseif move == 'r' then
 			inputtable.right=true;
-		elseif move == t then
+		elseif move == 't' then
 			inputtable.start=true;
-		elseif move == s then
+		elseif move == 's' then
 			inputtable.select=true;
 		else
 			
