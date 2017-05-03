@@ -1,3 +1,21 @@
+function deepCopy(object)
+    local lookup_table = {}
+    local function _copy(object)
+        if type(object) ~= "table" then
+            return object
+        elseif lookup_table[object] then
+            return lookup_table[object]
+        end
+        local new_table = {}
+        lookup_table[object] = new_table
+        for index, value in pairs(object) do
+            new_table[_copy(index)] = _copy(value)
+        end
+        return setmetatable(new_table, getmetatable(object))
+    end
+    return _copy(object)
+end
+
 function makeMoves(movelist) --takes a list of chars
 
 	--[[
@@ -20,7 +38,7 @@ function makeMoves(movelist) --takes a list of chars
 	finalinputs = {};--a list 
 
 	for i, move in ipairs(movelist) do
-		inputtable=blanktable;
+		inputtable=deepCopy(blanktable);
 		if move == 'a' then
 			inputtable.A=true;
 		elseif move == 'b' then
@@ -42,6 +60,9 @@ function makeMoves(movelist) --takes a list of chars
 		end
 		
 		table.insert(finalinputs, inputtable);
+		--[[for a = 1,16 do
+			table.insert(finalinputs, deepCopy(blanktable));
+		end--]]
 
 	end
 
@@ -54,7 +75,7 @@ inputs = makeMoves(testmovelist);
 i=1;
 while(true) do
 	currentinput = inputs[i];
-	joypad.set(1,{A=false, up=false, left=false, B=false, select=false, right=false, down=false, start=false});
+	joypad.set(1,{A=nil, up=nil, left=nil, B=nil, select=nil, right=nil, down=nil, start=nil});
 	if(currentinput) then
 		joypad.set(1,currentinput);
 	end
