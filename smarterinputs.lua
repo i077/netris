@@ -70,25 +70,35 @@ function makeMoves(movelist) --takes a list of chars
 
 end
 --END OF HELPER FUNCTIONS
-testmovelist = {'a','l','a','r','b','l',};
-inputs = makeMoves(testmovelist);
-i=1;
+----testmovelist = {'a','l','a','r','b','l',};
+----inputs = makeMoves(testmovelist);
+maneuvers = {};
+testmaneuverlist = {{'a','l','a','l'},{'b','r','b'},{'l','l','l','b','r'},{'l','r','l','r','l','r','l','r','r','r','b','a','l'},{'u','u','d','d','l','r','l','r','b','a'}};
+for a = 1,#testmaneuverlist do
+	table.insert(maneuvers, makeMoves(testmaneuverlist[a]));
+end
+movenum=1;
+maneuvernum=0;
 
-while(true) do --Emulator running loop
+while(true) do 
 
     piecenum = memory.readbyte(0x001A); --tracks "number of pieces this poweron" value at address 0x001A in memory
     if(piecenum ~= lastpiecenum) then --when a new piece falls, restart the move queue
-        i=1;
+        movenum=1;
+		maneuvernum=maneuvernum+1;
         lastpiecenum=piecenum; --so it won't do anything again until a new piece falls
     end
 
     --input control 
-	currentinput = inputs[i];
-	joypad.set(1,{A=nil, up=nil, left=nil, B=nil, select=nil, right=nil, down=nil, start=nil});
-	if(currentinput) then
-		joypad.set(1,currentinput);
+	currentmaneuver=maneuvers[maneuvernum];
+	if(currentmaneuver) then
+		currentmove=currentmaneuver[movenum];
+		joypad.set(1,{A=nil, up=nil, left=nil, B=nil, select=nil, right=nil, down=nil, start=nil});
+		if(currentmove) then
+			joypad.set(1,currentmove);
+		end
 	end
-	i=i+1;
+	movenum=movenum+1;
 
 	FCEU.frameadvance();
 end
