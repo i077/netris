@@ -69,11 +69,30 @@ function makeMoves(movelist) --takes a list of chars
 	return finalinputs;
 
 end
+
+function readmaneuvers()--creates maneuver list
+    local file = assert(io.open("testmaneuvers.txt",'r'));
+    --file saved in current directory, each line is one maneuver, moves not delineated
+    io.input(file);
+    local maneuverlist = {};
+    for line in io.lines() do
+        local moves = {};
+        --print(string.len(line));
+        for i = 1,string.len(line) do
+            table.insert(moves,string.sub(line,i,i));
+            --print(moves[i]);
+        end
+        table.insert(maneuverlist,moves);
+    end
+    return maneuverlist;
+end
 --END OF HELPER FUNCTIONS
+
 ----testmovelist = {'a','l','a','r','b','l',};
 ----inputs = makeMoves(testmovelist);
 maneuvers = {};
-testmaneuverlist = {{'a','l','a','l'},{'b','r','b'},{'l','l','l','b','r'},{'l','r','l','r','l','r','l','r','r','r','b','a','l'},{'u','u','d','d','l','r','l','r','b','a'}};
+--testmaneuverlist = {{'a','l','a','l'},{'b','r','b'},{'l','l','l','b','r'},{'l','r','l','r','l','r','l','r','r','r','b','a','l'},{'u','u','d','d','l','r','l','r','b','a'}};
+testmaneuverlist = readmaneuvers();
 for a = 1,#testmaneuverlist do
 	table.insert(maneuvers, makeMoves(testmaneuverlist[a]));
 end
