@@ -19,7 +19,7 @@ end
 function makeMoves(movelist) --takes a list of chars
 
 	--[[
-		
+
 		movelist format:
 		each button (left column) is represented by a char (right column)
 
@@ -33,9 +33,9 @@ function makeMoves(movelist) --takes a list of chars
 		Select = s
 
 	--]]
-	
+
 	blanktable = {A=false, up=false, left=false, B=false, select=false, right=false, down=false, start=false}; --An empty inputtable, tells the emulator to do nothing
-	finalinputs = {};--a list 
+	finalinputs = {};--a list
 
 	for i, move in ipairs(movelist) do
 		inputtable=deepCopy(blanktable);
@@ -56,9 +56,9 @@ function makeMoves(movelist) --takes a list of chars
 		elseif move == 's' then
 			inputtable.select=true;
 		else
-			
+
 		end
-		
+
 		table.insert(finalinputs, inputtable);
 		--[[for a = 1,16 do
 			table.insert(finalinputs, deepCopy(blanktable));
