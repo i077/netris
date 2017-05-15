@@ -23,12 +23,14 @@ function readboard()
 		end
 	end
 
+	--[[
     f = io.open("board.txt", "w")
     io.output(f)
     for i = 1, #board do
             io.write(tostring(board[i]).." ")
     end
     io.close(f)
+	--]]
 	
 	return board
 end
