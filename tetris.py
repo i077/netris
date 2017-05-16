@@ -62,26 +62,105 @@ colors = [
 
 # Define the shapes of the single parts
 tetris_shapes = [
-    [[1, 1, 1],
-     [0, 1, 0]],
+    [ # T pieces
+        [[0, 0, 0],
+         [1, 1, 1],
+         [0, 1, 0]],
+        
+        [[0, 1, 0],
+         [1, 1, 0],
+         [0, 1, 0]],
 
-    [[0, 2, 2],
-     [2, 2, 0]],
+        [[0, 1, 0],
+         [1, 1, 1],
+         [0, 0, 0]],
 
-    [[3, 3, 0],
-     [0, 3, 3]],
+        [[0, 1, 0],
+         [0, 1, 1],
+         [0, 1, 0]],
+    ],
 
-    [[4, 0, 0],
-     [4, 4, 4]],
+    [ # S pieces
+        [[0, 0, 0],
+         [0, 2, 2],
+         [2, 2, 0]],
+        
+        [[0, 2, 0],
+         [0, 2, 2],
+         [0, 0, 2]]
+    ],
 
-    [[0, 0, 5],
-     [5, 5, 5]],
+    [ # Z pieces
+        [[0, 0, 0],
+         [3, 3, 0],
+         [0, 3, 3]],
+        
+        [[0, 0, 3],
+         [0, 3, 3],
+         [0, 3, 0]]
+    ],
 
-    [[6, 6, 6, 6]],
+    [ # J pieces
+        [[4, 0, 0],
+         [4, 4, 4],
+         [0, 0, 0]],
 
-    [[7, 7],
-     [7, 7]]
+        [[0, 4, 4],
+         [0, 4, 0],
+         [0, 4, 0]],
+
+        [[0, 0, 0],
+         [4, 4, 4],
+         [0, 0, 4]],
+
+        [[0, 4, 0],
+         [0, 4, 0],
+         [4, 4, 0]]
+    ],
+
+    [ # L pieces
+        [[0, 0, 5],
+         [5, 5, 5],
+         [0, 0, 0]],
+
+        [[0, 5, 0],
+         [0, 5, 0],
+         [0, 5, 5]],
+
+        [[0, 0, 0],
+         [5, 5, 5],
+         [5, 0, 0]],
+
+        [[5, 5, 0],
+         [0, 5, 0],
+         [0, 5, 0]]
+    ],
+
+    [ # I pieces
+        [[0, 0, 0, 0],
+         [0, 0, 0, 0],
+         [6, 6, 6, 6],
+         [0, 0, 0, 0]],
+
+        [[0, 0, 6, 0],
+         [0, 0, 6, 0],
+         [0, 0, 6, 0],
+         [0, 0, 6, 0]],
+    ],
+
+    [ # O piece
+        [[7, 7],
+         [7, 7]]
+    ]
 ]
+
+def go_to_next_index(list, index, dir):
+    new_index = index
+    if dir == 1:
+        new_index = 0 if index == len(list) - 1 else index + 1
+    elif dir == -1:
+        new_index = len(list) - 1 if index == 0 else index - 1
+    return list[new_index]
 
 def rotate_clockwise(shape):
     return [ [ shape[y][x]
@@ -140,12 +219,12 @@ class TetrisApp(object):
                                                      # mouse movement
                                                      # events, so we
                                                      # block them.
-        self.next_stone = tetris_shapes[rand(len(tetris_shapes))]
+        self.next_stone = tetris_shapes[rand(len(tetris_shapes))][0]
         self.init_game()
 
     def new_stone(self):
         self.stone = self.next_stone[:]
-        self.next_stone = tetris_shapes[rand(len(tetris_shapes))]
+        self.next_stone = tetris_shapes[rand(len(tetris_shapes))][0]
         self.stone_x = int(cols / 2 - len(self.stone[0])/2)
         self.stone_y = 0
 
