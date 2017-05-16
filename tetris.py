@@ -88,6 +88,13 @@ def rotate_clockwise(shape):
             for y in range(len(shape)) ]
         for x in range(len(shape[0]) - 1, -1, -1) ]
 
+# Added Code
+def rotate_counterclockwise(shape):
+    for i in range(3):
+        shape = rotate_clockwise(shape)
+    return shape
+# End
+
 def check_collision(board, shape, offset):
     off_x, off_y = offset
     for cy, row in enumerate(shape):
@@ -261,6 +268,16 @@ class TetrisApp(object):
                                    (self.stone_x, self.stone_y)):
                 self.stone = new_stone
 
+# Added code
+    def rotate_stone_ccw(self):
+        if not self.gameover and not self.paused:
+            new_stone = rotate_counterclockwise(self.stone)
+            if not check_collision(self.board,
+                                   new_stone,
+                                   (self.stone_x, self.stone_y)):
+                self.stone = new_stone
+# End
+
     def toggle_pause(self):
         self.paused = not self.paused
 
@@ -278,7 +295,9 @@ class TetrisApp(object):
             'UP':		self.rotate_stone,
             'p':		self.toggle_pause,
             'SPACE':	self.start_game,
-            'RETURN':	self.insta_drop
+            'RETURN':	self.insta_drop,
+            'd':        self.rotate_stone_ccw,# Added these 2 lines
+            'f':        self.rotate_stone
         }
 
         self.gameover = False
