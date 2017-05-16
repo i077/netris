@@ -162,17 +162,15 @@ def go_to_next_index(list, index, dir):
         new_index = len(list) - 1 if index == 0 else index - 1
     return list[new_index]
 
-def rotate_clockwise(shape):
+def rotate_clockwise(shape): # This shouldn't get used
     return [ [ shape[y][x]
             for y in range(len(shape)) ]
         for x in range(len(shape[0]) - 1, -1, -1) ]
 
-# Added Code
-def rotate_counterclockwise(shape):
+def rotate_counterclockwise(shape): # This shouldn't get used
     for i in range(3):
         shape = rotate_clockwise(shape)
     return shape
-# End
 
 def check_collision(board, shape, offset):
     off_x, off_y = offset
@@ -219,12 +217,18 @@ class TetrisApp(object):
                                                      # mouse movement
                                                      # events, so we
                                                      # block them.
-        self.next_stone = tetris_shapes[rand(len(tetris_shapes))][0]
+        self.next_stone_index = rand(len(tetris_shapes))
+        self.next_stone = tetris_shapes[self.next_stone_index][0]
+        self.next_stone_variation_index = 0
         self.init_game()
 
     def new_stone(self):
         self.stone = self.next_stone[:]
-        self.next_stone = tetris_shapes[rand(len(tetris_shapes))][0]
+        self.stone_index = self.next_stone_index
+        self.stone_variation_index = self.next_stone_variation_index
+        self.next_stone_index = rand(len(tetris_shapes))
+        self.next_stone = tetris_shapes[self.next_stone_index][0]
+        self.next_stone_variation_index = 0
         self.stone_x = int(cols / 2 - len(self.stone[0])/2)
         self.stone_y = 0
 
@@ -341,7 +345,8 @@ class TetrisApp(object):
 
     def rotate_stone(self):
         if not self.gameover and not self.paused:
-            new_stone = rotate_clockwise(self.stone)
+            # new_stone = rotate_clockwise(self.stone)
+            new_stone = go_to_next_index(tetris_shapes[self.stone_index], self.stone_variation_index, 1)
             if not check_collision(self.board,
                                    new_stone,
                                    (self.stone_x, self.stone_y)):
@@ -350,7 +355,8 @@ class TetrisApp(object):
 # Added code
     def rotate_stone_ccw(self):
         if not self.gameover and not self.paused:
-            new_stone = rotate_counterclockwise(self.stone)
+            # new_stone = rotate_counterclockwise(self.stone)
+            new_stone = go_to_next_index(tetris_shapes[self.stone_index], self.stone_variation_index, -1)
             if not check_collision(self.board,
                                    new_stone,
                                    (self.stone_x, self.stone_y)):
