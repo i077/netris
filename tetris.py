@@ -8,7 +8,7 @@
 # or leave a comment on this gist.
 
 # Very simple tetris implementation
-# 
+#
 # Control keys:
 #       Down - Drop stone faster
 # Left/Right - Move stone
@@ -209,7 +209,7 @@ def new_board():
 class TetrisApp(object):
     def __init__(self):
         pygame.init()
-        pygame.key.set_repeat(250,25)
+        # pygame.key.set_repeat(250,25)
         self.width = cell_size*(cols+6)
         self.height = cell_size*rows
         self.rlim = cell_size*cols
@@ -237,18 +237,8 @@ class TetrisApp(object):
         self.next_stone_variation_index = 0
         # self.stone_x = int(cols / 2 - len(self.stone[0])/2)
         self.stone_x = 5
-        # self.stone_y = 0
-        if self.stone_index == 0:
-            self.stone_y = -1
-        elif self.stone_index == 1:
-            self.stone_y = -1
-        elif self.stone_index == 2:
-            self.stone_y = -1
-        elif self.stone_index == 3:
-            self.stone_y = -1
-        elif self.stone_index == 4:
-            self.stone_y = -1
-        elif self.stone_index == 5:
+        self.stone_y = -1
+        if self.stone_index == 5:
             self.stone_x = 4
             self.stone_y = -2
         elif self.stone_index == 6:
