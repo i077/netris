@@ -160,7 +160,7 @@ def go_to_next_index(list, index, dir):
         new_index = 0 if index == len(list) - 1 else index + 1
     elif dir == -1:
         new_index = len(list) - 1 if index == 0 else index - 1
-    return list[new_index]
+    return new_index
 
 def rotate_clockwise(shape): # This shouldn't get used
     return [ [ shape[y][x]
@@ -343,17 +343,17 @@ class TetrisApp(object):
             while(not self.drop(True)):
                 pass
 
-    def rotate_stone(self):
+    def rotate_stone(self, dir):
         if not self.gameover and not self.paused:
             # new_stone = rotate_clockwise(self.stone)
-            new_stone = go_to_next_index(tetris_shapes[self.stone_index], self.stone_variation_index, 1)
+            new_stone_variation_index = go_to_next_index(tetris_shapes[self.stone_index], self.stone_variation_index, dir)
             if not check_collision(self.board,
-                                   new_stone,
+                                   tetris_shapes[self.stone_index][new_stone_variation_index],
                                    (self.stone_x, self.stone_y)):
-                self.stone = new_stone
+                self.stone = tetris_shapes[self.stone_index][new_stone_variation_index]
+                self.stone_variation_index = new_stone_variation_index
 
-# Added code
-    def rotate_stone_ccw(self):
+    def rotate_stone_ccw(self): # This is never used
         if not self.gameover and not self.paused:
             # new_stone = rotate_counterclockwise(self.stone)
             new_stone = go_to_next_index(tetris_shapes[self.stone_index], self.stone_variation_index, -1)
@@ -361,7 +361,6 @@ class TetrisApp(object):
                                    new_stone,
                                    (self.stone_x, self.stone_y)):
                 self.stone = new_stone
-# End
 
     def toggle_pause(self):
         self.paused = not self.paused
@@ -377,12 +376,12 @@ class TetrisApp(object):
             'LEFT':		lambda:self.move(-1),
             'RIGHT':	lambda:self.move(+1),
             'DOWN':		lambda:self.drop(True),
-            'UP':		self.rotate_stone,
+            'UP':		lambda:self.rotate_stone(1),
             'p':		self.toggle_pause,
             'SPACE':	self.start_game,
             'RETURN':	self.insta_drop,
-            'd':        self.rotate_stone_ccw,# Added these 2 lines
-            'f':        self.rotate_stone
+            'd':        lambda:self.rotate_stone(-1),
+            'f':        lambda:self.rotate_stone(1)
         }
 
         self.gameover = False
