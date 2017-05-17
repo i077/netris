@@ -44,7 +44,7 @@ import pygame, sys
 
 # The configuration
 cell_size =	18
-cols =		10
+cols =		12
 rows =		20
 maxfps = 	30
 
@@ -57,7 +57,8 @@ colors = [
 (50,  120, 52 ),
 (146, 202, 73 ),
 (150, 161, 218 ),
-(35,  35,  35) # Helper color for background grid
+(35,  35,  35),
+(134, 134, 134)# Helper color for background grid
 ]
 
 # Define the shapes of the single parts
@@ -101,39 +102,41 @@ tetris_shapes = [
     ],
 
     [ # J pieces
-        [[4, 0, 0],
-         [4, 4, 4],
-         [0, 0, 0]],
-
-        [[0, 4, 4],
-         [0, 4, 0],
-         [0, 4, 0]],
-
         [[0, 0, 0],
          [4, 4, 4],
          [0, 0, 4]],
 
         [[0, 4, 0],
          [0, 4, 0],
-         [4, 4, 0]]
+         [4, 4, 0]],
+
+        [[4, 0, 0],
+         [4, 4, 4],
+         [0, 0, 0]],
+
+        [[0, 4, 4],
+         [0, 4, 0],
+         [0, 4, 0]]
+
     ],
 
     [ # L pieces
-        [[0, 0, 5],
-         [5, 5, 5],
-         [0, 0, 0]],
-
-        [[0, 5, 0],
-         [0, 5, 0],
-         [0, 5, 5]],
-
         [[0, 0, 0],
          [5, 5, 5],
          [5, 0, 0]],
 
         [[5, 5, 0],
          [0, 5, 0],
-         [0, 5, 0]]
+         [0, 5, 0]],
+
+        [[0, 0, 5],
+         [5, 5, 5],
+         [0, 0, 0]],
+
+        [[0, 5, 0],
+         [0, 5, 0],
+         [0, 5, 5]]
+
     ],
 
     [ # I pieces
@@ -191,7 +194,10 @@ def join_matrixes(mat1, mat2, mat2_off):
     off_x, off_y = mat2_off
     for cy, row in enumerate(mat2):
         for cx, val in enumerate(row):
-            mat1[cy+off_y-1	][cx+off_x] += val
+            try:
+                mat1[cy+off_y-1	][cx+off_x] += val
+            except IndexError:
+                pass
     return mat1
 
 def new_board():
@@ -230,7 +236,21 @@ class TetrisApp(object):
         self.next_stone = tetris_shapes[self.next_stone_index][0]
         self.next_stone_variation_index = 0
         self.stone_x = int(cols / 2 - len(self.stone[0])/2)
-        self.stone_y = 0
+        # self.stone_y = 0
+        if self.stone_index == 0:
+            self.stone_y = -1
+        elif self.stone_index == 1:
+            self.stone_y = -1
+        elif self.stone_index == 2:
+            self.stone_y = -1
+        elif self.stone_index == 3:
+            self.stone_y = -1
+        elif self.stone_index == 4:
+            self.stone_y = -1
+        elif self.stone_index == 5:
+            self.stone_y = -2
+        elif self.stone_index == 6:
+            self.stone_y = 0
 
         if check_collision(self.board,
                            self.stone,
@@ -299,10 +319,20 @@ class TetrisApp(object):
     def move(self, delta_x):
         if not self.gameover and not self.paused:
             new_x = self.stone_x + delta_x
+            '''
             if new_x < 0:
-                new_x = 0
-            if new_x > cols - len(self.stone[0]):
-                new_x = cols - len(self.stone[0])
+                    #new_x = 0
+                empty = True
+                for i in range(len(tetris_shapes[self.stone_index]) -1):
+                    col = -(1 + new_x)
+                    if tetris_shapes[self.stone_index][self.stone_variation_index][i][col] != 0:
+                        empty = False
+                        break
+                if not empty:
+                    new_x = self.stone_x
+            #if new_x > cols - len(self.stone[0]):
+                    #new_x = cols - len(self.stone[0])
+            '''
             if not check_collision(self.board,
                                    self.stone,
                                    (new_x, self.stone_y)):
@@ -389,6 +419,9 @@ class TetrisApp(object):
 
         dont_burn_my_cpu = pygame.time.Clock()
         while 1:
+            for i in range(rows):
+                self.board[i][0] = 9
+                self.board[i][cols - 1] = 9
             self.screen.fill((0,0,0))
             if self.gameover:
                 self.center_msg("""Game Over!\nYour score: %d
