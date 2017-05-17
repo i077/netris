@@ -235,7 +235,8 @@ class TetrisApp(object):
         self.next_stone_index = rand(len(tetris_shapes))
         self.next_stone = tetris_shapes[self.next_stone_index][0]
         self.next_stone_variation_index = 0
-        self.stone_x = int(cols / 2 - len(self.stone[0])/2)
+        # self.stone_x = int(cols / 2 - len(self.stone[0])/2)
+        self.stone_x = 5
         # self.stone_y = 0
         if self.stone_index == 0:
             self.stone_y = -1
@@ -248,6 +249,7 @@ class TetrisApp(object):
         elif self.stone_index == 4:
             self.stone_y = -1
         elif self.stone_index == 5:
+            self.stone_x = 4
             self.stone_y = -2
         elif self.stone_index == 6:
             self.stone_y = 0
