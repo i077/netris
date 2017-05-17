@@ -41,6 +41,7 @@
 
 from random import randrange as rand
 import pygame, sys
+from network import *
 
 # The configuration
 cell_size =	18
@@ -392,6 +393,17 @@ class TetrisApp(object):
             self.init_game()
             self.gameover = False
 
+    def one_hot_to_inputs(one_hot):
+        key = ''
+        keys = ['LEFT', 'RIGHT', 'd', 'f']
+        if 1 not in one_hot:
+            return
+        for i, k in enumerate(one_hot):
+            if k:
+                key = keys[i]
+                break
+        key_actions[key]()
+
     def run(self):
         key_actions = {
             'ESCAPE':	self.quit,
@@ -411,6 +423,7 @@ class TetrisApp(object):
 
         dont_burn_my_cpu = pygame.time.Clock()
         while 1:
+            print(readboard(self.board))
             for i in range(rows):
                 self.board[i][0] = 9
                 self.board[i][cols - 1] = 9
@@ -452,6 +465,7 @@ Press space to continue""" % self.score)
                             key_actions[key]()
 
             dont_burn_my_cpu.tick(maxfps)
+
 
 if __name__ == '__main__':
     App = TetrisApp()
