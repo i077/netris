@@ -42,11 +42,12 @@
 from random import randrange as rand
 import pygame, sys
 from network import *
+from copy import deepcopy
 
 # The configuration
 cell_size =	18
 cols =		12
-rows =		20
+rows =		22
 maxfps = 	30
 
 colors = [
@@ -59,7 +60,8 @@ colors = [
 (146, 202, 73 ),
 (150, 161, 218 ),
 (35,  35,  35),
-(134, 134, 134)# Helper color for background grid
+(134, 134, 134),
+(0, 255, 255)
 ]
 
 # Define the shapes of the single parts
@@ -249,6 +251,15 @@ class TetrisApp(object):
                            self.stone,
                            (self.stone_x, self.stone_y)):
             self.gameover = True
+        if self.check_top_rows():
+            self.gameover = True
+
+    def check_top_rows(self):
+        if rows > 20 :
+            for i in range(1,cols-1):
+                if self.board[0][i] or self.board[1][i]:
+                    return True
+        return False
 
     def init_game(self):
         self.board = new_board()
@@ -288,6 +299,7 @@ class TetrisApp(object):
         for y, row in enumerate(matrix):
             for x, val in enumerate(row):
                 if val:
+                    #print(val)
                     pygame.draw.rect(
                         self.screen,
                         colors[val],
@@ -299,15 +311,16 @@ class TetrisApp(object):
                             cell_size,
                             cell_size),0)
 
+
     def add_cl_lines(self, n):
         linescores = [0, 40, 100, 300, 1200]
         self.lines += n
         self.score += linescores[n] * self.level
-        if self.lines >= self.level*6:
+        if self.lines >= self.level*10:
             self.level += 1
-            newdelay = 1000-50*(self.level-1)
-            newdelay = 100 if newdelay < 100 else newdelay
-            pygame.time.set_timer(pygame.USEREVENT+1, newdelay)
+            #newdelay = 1000-50*(self.level-1)
+            #newdelay = 100 if newdelay < 100 else newdelay
+            #pygame.time.set_timer(pygame.USEREVENT+1, newdelay)
 
     def move(self, delta_x):
         if not self.gameover and not self.paused:
@@ -393,6 +406,16 @@ class TetrisApp(object):
             self.init_game()
             self.gameover = False
 
+    def prep_board(self, gameboard, piece):
+        new_piece = deepcopy(piece)
+        new_gameboard = deepcopy(gameboard)
+        for i, row in enumerate(new_piece):
+            for j, cell in enumerate(row):
+                if cell:
+                    new_piece[i][j] = 10
+        new_gameboard = join_matrixes(new_gameboard, new_piece, (self.stone_x, self.stone_y))
+        return new_gameboard
+        
     def one_hot_to_inputs(one_hot):
         key = ''
         keys = ['LEFT', 'RIGHT', 'd', 'f']
@@ -423,7 +446,7 @@ class TetrisApp(object):
 
         dont_burn_my_cpu = pygame.time.Clock()
         while 1:
-            print(readboard(self.board))
+            print(readboard(self.prep_board(self.board, self.stone)))
             for i in range(rows):
                 self.board[i][0] = 9
                 self.board[i][cols - 1] = 9
