@@ -49,7 +49,7 @@ from random import randrange, randint
 cell_size =	18
 cols =		12
 rows =		22
-maxfps = 	30
+maxfps = 	1000
 
 keys_y = 100
 keys_x = 100
@@ -281,7 +281,8 @@ class TetrisApp(object):
         self.level = 1
         self.score = 0
         self.lines = 0
-        pygame.time.set_timer(pygame.USEREVENT+1, 1000)
+        max_tick = int(1000 * (30 / maxfps))
+        pygame.time.set_timer(pygame.USEREVENT+1, max_tick)
 
     def disp_msg(self, msg, topleft):
         x,y = topleft
