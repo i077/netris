@@ -50,6 +50,10 @@ cols =		12
 rows =		22
 maxfps = 	30
 
+keys_y = 100
+keys_x = 100
+keys_spacing = 20
+
 colors = [
 (0,   0,   0  ),
 (255, 85,  85),
@@ -216,7 +220,7 @@ class TetrisApp(object):
         self.width = cell_size*(cols+6)
         self.height = cell_size*rows
         self.rlim = cell_size*cols
-        self.bground_grid = [[ 8 if x%2==y%2 else 0 for x in range(cols)] for y in range(rows)]
+        self.bground_grid = [[ 8 if x%2==y%2 and y > 1 else 0 for x in range(cols)] for y in range(rows)]
 
         self.default_font =  pygame.font.Font(
             pygame.font.get_default_font(), 12)
@@ -240,12 +244,12 @@ class TetrisApp(object):
         self.next_stone_variation_index = 0
         # self.stone_x = int(cols / 2 - len(self.stone[0])/2)
         self.stone_x = 5
-        self.stone_y = -1
+        self.stone_y = 1
         if self.stone_index == 5:
             self.stone_x = 4
-            self.stone_y = -2
-        elif self.stone_index == 6:
             self.stone_y = 0
+        elif self.stone_index == 6:
+            self.stone_y = 2
 
         if check_collision(self.board,
                            self.stone,
@@ -415,13 +419,13 @@ class TetrisApp(object):
                     new_piece[i][j] = 10
         new_gameboard = join_matrixes(new_gameboard, new_piece, (self.stone_x, self.stone_y))
         return new_gameboard
-        
+
     def one_hot_to_inputs(one_hot):
         key = ''
         keys = ['LEFT', 'RIGHT', 'd', 'f']
         if 1 not in one_hot:
             return
-        for i, k in enumerate(one_hot):
+        for i, k in enumerate(one_hot[:-1]):
             if k:
                 key = keys[i]
                 break
