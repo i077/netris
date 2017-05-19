@@ -43,6 +43,7 @@ from random import randrange as rand
 import pygame, sys
 from network import *
 from copy import deepcopy
+from random import randrange, randint
 
 # The configuration
 cell_size =	18
@@ -233,6 +234,14 @@ class TetrisApp(object):
         self.next_stone_index = rand(len(tetris_shapes))
         self.next_stone = tetris_shapes[self.next_stone_index][0]
         self.next_stone_variation_index = 0
+
+        # Training stuff
+        self.training_data = []
+        self.scores = []
+        self.accepted_scores = []
+        self.prev_observation = []
+        self.number_of_games = 0
+
         self.init_game()
 
     def new_stone(self):
@@ -253,10 +262,10 @@ class TetrisApp(object):
 
         if check_collision(self.board,
                            self.stone,
-                           (self.stone_x, self.stone_y)):
+                           (self.stone_x, self.stone_y)) or self.check_top_rows():
+            self.number_of_games += 1
             self.gameover = True
-        if self.check_top_rows():
-            self.gameover = True
+            on_gameover(self)
 
     def check_top_rows(self):
         if rows > 20 :
@@ -268,6 +277,7 @@ class TetrisApp(object):
     def init_game(self):
         self.board = new_board()
         self.new_stone()
+        self.game_memory = []
         self.level = 1
         self.score = 0
         self.lines = 0
@@ -364,17 +374,17 @@ class TetrisApp(object):
                   self.stone,
                   (self.stone_x, self.stone_y))
                 self.new_stone()
-                cleared_rows = 0
+                self.cleared_rows = 0
                 while True:
                     for i, row in enumerate(self.board[:-1]):
                         if 0 not in row:
                             self.board = remove_row(
                               self.board, i)
-                            cleared_rows += 1
+                            self.cleared_rows += 1
                             break
                     else:
                         break
-                self.add_cl_lines(cleared_rows)
+                self.add_cl_lines(self.cleared_rows)
                 return True
         return False
 
@@ -420,7 +430,10 @@ class TetrisApp(object):
         new_gameboard = join_matrixes(new_gameboard, new_piece, (self.stone_x, self.stone_y))
         return new_gameboard
 
-    def one_hot_to_inputs(one_hot):
+    def prep_current_board(self):
+        return self.prep_board(self.board, self.stone)
+
+    def one_hot_to_inputs(self, one_hot):
         key = ''
         keys = ['LEFT', 'RIGHT', 'd', 'f']
         if 1 not in one_hot:
@@ -429,10 +442,11 @@ class TetrisApp(object):
             if k:
                 key = keys[i]
                 break
-        key_actions[key]()
+        if key:
+            self.key_actions[key]()
 
     def run(self):
-        key_actions = {
+        self.key_actions = {
             'ESCAPE':	self.quit,
             'LEFT':		lambda:self.move(-1),
             'RIGHT':	lambda:self.move(+1),
@@ -450,7 +464,9 @@ class TetrisApp(object):
 
         dont_burn_my_cpu = pygame.time.Clock()
         while 1:
-            print(readboard(self.prep_board(self.board, self.stone)))
+            self.random_training()
+            create_training_data(self)
+            # print(readboard(self.prep_board(self.board, self.stone)))
             for i in range(rows):
                 self.board[i][0] = 9
                 self.board[i][cols - 1] = 9
@@ -461,24 +477,24 @@ Press space to continue""" % self.score)
             else:
                 if self.paused:
                     self.center_msg("Paused")
-                else:
-                    pygame.draw.line(self.screen,
-                        (255,255,255),
-                        (self.rlim+1, 0),
-                        (self.rlim+1, self.height-1))
-                    self.disp_msg("Next:", (
-                        self.rlim+cell_size,
-                        2))
-                    self.disp_msg("Score: %d\n\nLevel: %d\
-\nLines: %d" % (self.score, self.level, self.lines),
-                        (self.rlim+cell_size, cell_size*5))
-                    self.draw_matrix(self.bground_grid, (0,0))
-                    self.draw_matrix(self.board, (0,0))
-                    self.draw_matrix(self.stone,
-                        (self.stone_x, self.stone_y))
-                    self.draw_matrix(self.next_stone,
-                        (cols+1,2))
-            pygame.display.update()
+                # else:
+                    # pygame.draw.line(self.screen,
+                    #     (255,255,255),
+                    #     (self.rlim+1, 0),
+                    #     (self.rlim+1, self.height-1))
+                    # self.disp_msg("Next:", (
+                    #     self.rlim+cell_size,
+                    #     2))
+                    # self.disp_msg("Score: %d\n\nLevel: %d\
+# \nLines: %d" % (self.score, self.level, self.lines),
+                    #     (self.rlim+cell_size, cell_size*5))
+                    # self.draw_matrix(self.bground_grid, (0,0))
+                    # self.draw_matrix(self.board, (0,0))
+                    # self.draw_matrix(self.stone,
+                    #     (self.stone_x, self.stone_y))
+                    # self.draw_matrix(self.next_stone,
+                    #     (cols+1,2))
+            # pygame.display.update()
 
             for event in pygame.event.get():
                 if event.type == pygame.USEREVENT+1:
@@ -486,13 +502,18 @@ Press space to continue""" % self.score)
                 elif event.type == pygame.QUIT:
                     self.quit()
                 elif event.type == pygame.KEYDOWN:
-                    for key in key_actions:
+                    for key in self.key_actions:
                         if event.key == eval("pygame.K_"
                         +key):
-                            key_actions[key]()
+                            self.key_actions[key]()
 
             dont_burn_my_cpu.tick(maxfps)
-
+    
+    # Random training
+    def random_training(self):
+        inputindex = randint(0,4)
+        self.action = gen_onehot(inputindex)
+        self.one_hot_to_inputs(self.action)
 
 if __name__ == '__main__':
     App = TetrisApp()
