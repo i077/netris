@@ -5,7 +5,7 @@ import numpy as np
 
 LR = 1e-3 # Learning rate
 score_threshold = 1 # Number of lines needed to clear to learn
-initial_games = 10000 # Number of games to train on
+initial_games = 30000 # Number of games to train on
 
 # Reads board and returns as 1D list
 def readboard(board):

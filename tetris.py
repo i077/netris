@@ -55,6 +55,8 @@ keys_y = 100
 keys_x = 100
 keys_spacing = 20
 
+training_offset = 10 # Make this 0 when playing regular game
+
 colors = [
 (0,   0,   0  ),
 (255, 85,  85),
@@ -253,12 +255,12 @@ class TetrisApp(object):
         self.next_stone_variation_index = 0
         # self.stone_x = int(cols / 2 - len(self.stone[0])/2)
         self.stone_x = 5
-        self.stone_y = 1
+        self.stone_y = 1 + training_offset
         if self.stone_index == 5:
             self.stone_x = 4
-            self.stone_y = 0
+            self.stone_y = 0 + training_offset
         elif self.stone_index == 6:
-            self.stone_y = 2
+            self.stone_y = 2 + training_offset
 
         if check_collision(self.board,
                            self.stone,
