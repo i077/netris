@@ -2,7 +2,7 @@ import tetris
 from network import readboard
 from tetris import *
 import tflearn
-from numpy import argmax, array, reshape
+from numpy import argmax, argmin, array, reshape
 
 game = TetrisApp()
 
@@ -16,13 +16,13 @@ if __name__ == "__main__":
     game.run()
 
     net = tflearn.input_data(shape=[None, 200])
-    net = tflearn.fully_connected(net, 500, activation='relu')
+    net = tflearn.fully_connected(net, 200, activation='sigmoid')
     # net = tflearn.dropout(net, 0.7)
     
-    net = tflearn.fully_connected(net, 1000, activation='relu')
+    net = tflearn.fully_connected(net, 100, activation='tanh')
     # net = tflearn.dropout(net, 0.7)
 
-    net = tflearn.fully_connected(net, 500, activation='relu')
+    net = tflearn.fully_connected(net, 10, activation='sigmoid')
     # net = tflearn.dropout(net, 0.7)
 
     net = fully_connected(net, 5, activation='softmax')
@@ -40,4 +40,3 @@ if __name__ == "__main__":
         print(action)
         game.one_hot_to_inputs(action)
         game.step()
-
