@@ -34,11 +34,11 @@ grad_update_freq = 5
 # Step to reset target network
 target_reset_freq = 40000
 # Learning rate
-learning_rate = 1e-3
+learning_rate = 5e-3
 # Discount rate of future rewards
 y_rate = 0.9
 # Number of steps to change ϵ to final val
-anneal_epsilon_timesteps = 4e5
+anneal_epsilon_timesteps = 4e6
 # Checkpoint data
 checkpoint_interval = 2000
 checkpoint_path = './learningdata/dqn_learning.tflearn.ckpt'
