@@ -5,6 +5,8 @@ import tetris
 import tensorflow as tf
 import tflearn
 import numpy as np
+import time
+import random
 
 # Initialize game environment
 game = tetris.TetrisApp()
@@ -25,9 +27,9 @@ T = 0
 # Size of minibatch when recalling from experience replay
 replay_minibatch = 4
 # Gradient update freq for each thread
-GradUpdate = 5
+grad_update_freq = 5
 # Step to reset target network
-Target = 40000
+target_reset_freq = 40000
 # Learning rate
 learning_rate = 1e-3
 # Discount rate of future rewards
@@ -63,10 +65,98 @@ def get_final_epsilon():
     return np.random_choice(final_vals, 1, p=list(probabilities))[0]
 
 # Async actor-learner thread, 1-step Q-learning
-def actor_learner_thread(thread_id, env, session, graph_ops, summary_ops, saver):
+def actor_learner_thread(thread_id, env, session, graph_ops, saver):
     # Step counter and threshold should be global
     global T_MAX, T
+    s, q_vals, target_s, target_q_vals, reset_target_network_params, a, y, grad_update = graph_ops
 
+    # Initialize Q network gradients
+    s_batch = []
+    a_batch = []
+    y_batch = []
+
+    final_epsilon = get_final_epsilon()
+    start_epsilon = 1.0
+    epsilon = start_epsilon
+
+    print("Thread {0} - Final epsilon: {1}".format(str(thread_id), str(final_epsilon)))
+    time.sleep(3 * thread_id)
+    t = 0
+
+    while T < T_MAX:
+        # Get initial state
+        s_t = env.readboard(env.prep_current_board())
+        state_terminal = False
+
+        # Set per-episode counters
+        ep_r = 0
+        ep_avg_max_q = 0
+        ep_t = 0
+
+        # Run the current episode until terminal state reached
+        while True:
+            # Get Q-values from network
+            q_vals_t = q_vals.eval(session=session, feed_dict={s: [s_t]})
+            # Choose action based on ϵ-greedy policy
+            a_t = np.zeros([num_actions])
+            if random.random() <= epsilon:
+                action_index = random.randrange(num_actions)
+            else:
+                action_index = np.argmax(q_vals_t)
+            a_t[action_index] = 1
+
+            # Reduce ϵ
+            if epsilon > final_epsilon:
+                epsilon -= (start_epsilon - final_epsilon) / anneal_epsilon_timesteps
+            
+            # Take action and recieve new state and reward
+            s_t1, r_t, ep, state_terminal = env.step_act(a_t)
+
+            # Accumulate gradients
+            target_q_vals_t = target_q_vals.eval(session=session, feed_dict={s: [s_t1]})
+            if state_terminal:
+                y_batch.append(r_t)
+            else:
+                y_batch.append(r_t + y * np.max(target_q_vals_t))
+
+            s_batch.append(s_t)
+            a_batch.append(a_t)
+
+            # Update state and counters
+            s_t = s_t1
+            T += 1
+            t += 1
+            ep_t += 1
+            ep_r += r_t
+            ep_avg_max_q = np.max(readout_t)
+
+            # Update target network if necessary
+            if T % target_reset_freq == 0:
+                session.run(reset_target_network_params)
+
+            # Update current network if necessary
+            if t % grad_update_freq == 0 or terminal:
+                if s_batch:
+                    session.run(grad_update, feed_dict={y: y_batch,
+                                                        s: s_batch,
+                                                        a: a_batch})
+                # Clear gradients
+                s_batch = []
+                a_batch = []
+                y_batch = []
+
+            # Save model progress to disk
+            if t % checkpoint_interval == 0:
+                saver.save(session, checkpoint_path, global_step=t)
+
+            # At end of episode, print stats
+            if terminal:
+                print("Thread {0} - T: {1}, R: {2}, Qmax: {3}, Eps = {4}, Eps progress: {5}"
+                      .format(thread_id, t, ep_r, ep_avg_max_q / float(ep_t), epsilon,
+                              t / float(anneal_epsilon_timesteps)))
+                break
+
+# Build networks and return operations
 def build_graph():
     # Create a shared deep Q network
     s, q_net = build_model()
@@ -91,7 +181,7 @@ def build_graph():
     optimizer = tf.train.RMSPropOptimizer(learning_rate)
     update = optimizer.minimize(cost, var_list=network_params)
 
-    return s, q_vals, target_s, target_q_vals, reset_target_network_params, a, y, update
+    return s, q_vals, target_s, target_q_vals, reset_target_network_params, a, y, grad_update
 
 if __name__ == '__main__':
     game.run()

@@ -233,6 +233,7 @@ class TetrisApp(object):
         self.next_stone_index = rand(len(tetris_shapes))
         self.next_stone = tetris_shapes[self.next_stone_index][0]
         self.next_stone_variation_index = 0
+        self.cleared_rows = 0
 
         # Training stuff
         self.training_data = []
@@ -432,6 +433,21 @@ class TetrisApp(object):
     def prep_current_board(self):
         return self.prep_board(self.board, self.stone)
 
+    # Reads board and returns as 1D list
+    def readboard(self, board):
+        new_board = []
+        for i, row in enumerate(board[2:-1]):
+            for j, cell in enumerate(row[1:-1]):
+                if cell:
+                    if cell == 10 :
+                        new_val = 1
+                    else:
+                        new_val = 0.5
+                else:
+                    new_val = 0
+                new_board.append(new_val)
+        return new_board
+
     def one_hot_to_inputs(self, one_hot):
         key = ''
         keys = ['LEFT', 'RIGHT', 'd', 'f']
@@ -447,11 +463,11 @@ class TetrisApp(object):
     def run(self):
         self.key_actions = {
             'ESCAPE':	self.quit,
-            'LEFT':		lambda:self.move(-1),
+            'LEFT':	lambda:self.move(-1),
             'RIGHT':	lambda:self.move(+1),
-            'DOWN':		lambda:self.drop(True),
-            'UP':		lambda:self.rotate_stone(1),
-            'p':		self.toggle_pause,
+            'DOWN':	lambda:self.drop(True),
+            'UP':	lambda:self.rotate_stone(1),
+            'p':	self.toggle_pause,
             'SPACE':	self.start_game,
             'RETURN':	self.insta_drop,
             'd':        lambda:self.rotate_stone(-1),
@@ -462,8 +478,6 @@ class TetrisApp(object):
         self.paused = False
 
         self.dont_burn_my_cpu = pygame.time.Clock()
-        while 1:
-            self.step()
     
     # Random training
     def random_training(self):
@@ -511,9 +525,17 @@ Press space to continue""" % self.score)
                     if event.key == eval("pygame.K_"
                     +key):
                         self.key_actions[key]()
-
+        self.cleared_lines = self.cleared_rows
+        self.cleared_rows = 0
         self.dont_burn_my_cpu.tick(maxfps)
+
+    def step_act(self, one_hot):
+        self.one_hot_to_inputs(one_hot)
+        self.step()
+        return (self.readboard(self.prep_current_board()), self.cleared_lines, self.gameover)
 
 if __name__ == '__main__':
     App = TetrisApp()
     App.run()
+    while 1:
+        App.step_act([0,0,0,0,1])
