@@ -8,14 +8,12 @@ import numpy as np
 import time
 import random
 
-# Initialize game environment
-game = tetris.TetrisApp()
-num_actions = 5
-
 # TRAINING PARAMETERS
 # -------------------
 # Are we training or testing?
 test = False
+# Number of actions game takes (size of action one_hot0
+num_actions = 5
 # Path to saved network model
 model_path = 'dqn_model.tflearn.ckpt'
 # Number of actor-learner threads
