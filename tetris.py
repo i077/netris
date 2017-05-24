@@ -242,6 +242,9 @@ class TetrisApp(object):
         self.prev_observation = []
         self.number_of_games = 0
 
+        self.prev_filled = 0
+        self.filled = 0
+
         self.init_game()
 
     def new_stone(self):
@@ -460,6 +463,25 @@ class TetrisApp(object):
         if key:
             self.key_actions[key]()
 
+    def filled_pct():
+        bd = prep_current_board()
+        filled = 0.
+        height = -1.
+        for i, row in enumerate(bd):
+            for j, cell in enumerate(row):
+                if cell > 0 and cell < 9:
+                    filled += 1
+                    if height == -1:
+                        height = i
+        if height == -1:
+            return 0.
+        height = rows - 2 - height
+        total = height * (cols - 2)
+        pct = filled/total
+        return pct
+
+
+
     def run(self):
         self.key_actions = {
             'ESCAPE':	self.quit,
@@ -527,12 +549,17 @@ Press space to continue""" % self.score)
                         self.key_actions[key]()
         self.cleared_lines = self.cleared_rows
         self.cleared_rows = 0
+
+        self.prev_filled = self.filled
+        self.filled = self.filled_pct()
+        self.d_filled = self.filled - self.prev_filled
+
         self.dont_burn_my_cpu.tick(maxfps)
 
     def step_act(self, one_hot):
         self.one_hot_to_inputs(one_hot)
         self.step()
-        return (self.readboard(self.prep_current_board()), self.cleared_lines, self.gameover)
+        return (self.readboard(self.prep_current_board()), self.cleared_lines + self.d_filled, self.gameover)
 
 if __name__ == '__main__':
     App = TetrisApp()
