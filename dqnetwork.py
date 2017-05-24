@@ -15,17 +15,19 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # -------------------
 # Are we training or testing?
 test = False
+# Resume training from checkpoint?
+resume = False
 # Number of actions game takes (size of action one_hot0
 num_actions = 5
 # Path to saved network model
-model_path = './learningdata/dqn_learning.tflearn.ckpt-800000'
+model_path = './learningdata/dqn_learning.tflearn.ckpt-206000'
 # Number of actor-learner threads
-n_threads = 1
+n_threads = 8
 # Training steps
-T_MAX = 8e5
+T_MAX = 8e8
 # Current step
 T = 0
-# Size of minibatch when recalling from experience replay
+# Size of minibatch when feeding consecutive frames
 replay_minibatch = 4
 # Gradient update freq for each thread
 grad_update_freq = 5
@@ -158,7 +160,7 @@ def actor_learner_thread(thread_id, env, session, graph_ops, saver):
 
             # At end of episode, print stats
             if state_terminal:
-                print("Thread {0} - T: {1}, R: {2}, Qmax: {3}, Eps = {4}, Eps progress: {5}"
+                print("Thread {0} - T: {1},\t R: {2:.4f},\t Qmax: {3:.4e},\t Eps = {4:.4f},\t Eps progress: {5:.2%}"
                       .format(thread_id, t, ep_r, ep_avg_max_q / float(ep_t), epsilon,
                               t / float(anneal_epsilon_timesteps)))
                 break
@@ -192,11 +194,14 @@ def build_graph():
 
 # Train the model
 def train(session, graph_ops, saver):
+    if resume:
+        saver.restore(session, model_path)
+        print("Restored from {0}".format(model_path))
     # Set up games
     games = [tetris.TetrisApp() for i in range(n_threads)]
 
     # Initialize session
-    session.run(tf.initialize_all_variables())
+    session.run(tf.global_variables_initializer())
 
     # Start actor_learner threads
     actor_learner_threads = \
@@ -247,4 +252,5 @@ def main(_):
             train(session, graph_ops, saver)
 
 if __name__ == '__main__':
+    tf.logging.set_verbosity(tf.logging.ERROR)
     tf.app.run()

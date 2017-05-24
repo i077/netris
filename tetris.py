@@ -48,7 +48,7 @@ from random import randrange, randint
 cell_size =	18
 cols =		12
 rows =		22
-maxfps = 	1000
+maxfps = 	2000
 
 keys_y = 100
 keys_x = 100
