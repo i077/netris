@@ -14,7 +14,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # TRAINING PARAMETERS
 # -------------------
 # Are we training or testing?
-test = True
+test = False
 # Number of actions game takes (size of action one_hot0
 num_actions = 5
 # Path to saved network model
@@ -207,6 +207,8 @@ def train(session, graph_ops, saver):
     for thread in actor_learner_threads:
         thread.start()
         time.sleep(0.01)
+
+    for thread in actor_learner_threads:
         thread.join()
 
 # Evaluate the model

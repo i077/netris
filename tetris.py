@@ -283,6 +283,8 @@ class TetrisApp(object):
         self.level = 1
         self.score = 0
         self.lines = 0
+        self.filled = 0
+        self.prev_filled = 0
         pygame.time.set_timer(pygame.USEREVENT+1, int(1000 * (30 / maxfps)))
         self.run()
 
@@ -388,6 +390,12 @@ class TetrisApp(object):
                     else:
                         break
                 self.add_cl_lines(self.cleared_rows)
+
+                self.prev_filled = self.filled
+                self.filled = self.filled_pct()
+                self.d_filled = self.filled - self.prev_filled
+                #print(self.prev_filled, self.filled, self.filled-self.prev_filled)
+
                 return True
         return False
 
@@ -463,21 +471,24 @@ class TetrisApp(object):
         if key:
             self.key_actions[key]()
 
-    def filled_pct():
-        bd = prep_current_board()
+    def filled_pct(self):
+        bd = self.prep_current_board()
         filled = 0.
         height = -1.
-        for i, row in enumerate(bd):
-            for j, cell in enumerate(row):
-                if cell > 0 and cell < 9:
-                    filled += 1
+        for i, row in enumerate(bd[2:-1]):
+            for j, cell in enumerate(row[1:-1]):
+                if 0<cell and cell < 9:
+                    filled += i / (rows - 2)
                     if height == -1:
                         height = i
         if height == -1:
             return 0.
         height = rows - 2 - height
+        if height == 0:
+            return 0.
         total = height * (cols - 2)
         pct = filled/total
+        #print(filled, height, total, pct)
         return pct
 
 
@@ -537,6 +548,8 @@ Press space to continue""" % self.score)
                     (cols+1,2))
         pygame.display.update()
 
+        self.d_filled = 0
+
         for event in pygame.event.get():
             if event.type == pygame.USEREVENT+1:
                 self.drop(False)
@@ -550,16 +563,13 @@ Press space to continue""" % self.score)
         self.cleared_lines = self.cleared_rows
         self.cleared_rows = 0
 
-        self.prev_filled = self.filled
-        self.filled = self.filled_pct()
-        self.d_filled = self.filled - self.prev_filled
-
+        
         self.dont_burn_my_cpu.tick(maxfps)
 
     def step_act(self, one_hot):
         self.one_hot_to_inputs(one_hot)
         self.step()
-        return (self.readboard(self.prep_current_board()), self.cleared_lines + self.d_filled, self.gameover)
+        return (self.readboard(self.prep_current_board()), self.cleared_lines + self.d_filled/3, self.gameover)
 
 if __name__ == '__main__':
     App = TetrisApp()
