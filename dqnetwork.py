@@ -7,20 +7,22 @@ import tflearn
 import numpy as np
 import time
 import random
+import os
 import tetris
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # TRAINING PARAMETERS
 # -------------------
 # Are we training or testing?
-test = False
+test = True
 # Number of actions game takes (size of action one_hot0
 num_actions = 5
 # Path to saved network model
-model_path = 'dqn_model.tflearn.ckpt'
+model_path = './learningdata/dqn_learning.tflearn.ckpt-800000'
 # Number of actor-learner threads
 n_threads = 1
 # Training steps
-T_MAX = 8e8
+T_MAX = 8e5
 # Current step
 T = 0
 # Size of minibatch when recalling from experience replay
@@ -32,12 +34,12 @@ target_reset_freq = 40000
 # Learning rate
 learning_rate = 1e-3
 # Discount rate of future rewards
-y = 0.9
+y_rate = 0.9
 # Number of steps to change ϵ to final val
 anneal_epsilon_timesteps = 4e5
 # Checkpoint data
 checkpoint_interval = 2000
-checkpoint_path = 'dqn_learning.tflearn.ckpt'
+checkpoint_path = './learningdata/dqn_learning.tflearn.ckpt'
 # Number of episodes to run when testing
 num_eval_episodes = 100
 
@@ -122,7 +124,7 @@ def actor_learner_thread(thread_id, env, session, graph_ops, saver):
             if state_terminal:
                 y_batch.append(r_t)
             else:
-                y_batch.append(r_t + y * np.max(target_q_vals_t))
+                y_batch.append(r_t + y_rate * np.max(target_q_vals_t))
 
             s_batch.append(s_t)
             a_batch.append(a_t)
@@ -143,8 +145,8 @@ def actor_learner_thread(thread_id, env, session, graph_ops, saver):
             if t % grad_update_freq == 0 or state_terminal:
                 if s_batch:
                     session.run(grad_update, feed_dict={y: y_batch,
-                                                        s: s_batch,
-                                                        a: a_batch})
+                                                        a: a_batch,
+                                                        s: s_batch})
                 # Clear gradients
                 s_batch = []
                 a_batch = []
@@ -216,7 +218,8 @@ def evaluate(session, graph_ops, saver):
     s, q_vals, _, _, _, _, _, _ = graph_ops
 
     # Start evaluating episodes
-    for i in xrange(num_eval_episodes):
+    for i in range(num_eval_episodes):
+        game.start_game()
         s_t = game.readboard(game.prep_current_board())
         ep_r = 0
         state_terminal = False
@@ -226,6 +229,7 @@ def evaluate(session, graph_ops, saver):
             a_t = np.zeros([num_actions])
             a_t[action_index] = 1
             s_t1, r_t, state_terminal = game.step_act(a_t)
+            s_t = s_t1
             ep_r += r_t
         print("Episode {0} - Reward: {1}".format(i, ep_r))
     game.quit()

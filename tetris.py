@@ -48,7 +48,7 @@ from random import randrange, randint
 cell_size =	18
 cols =		12
 rows =		22
-maxfps = 	30
+maxfps = 	1000
 
 keys_y = 100
 keys_x = 100
@@ -265,7 +265,6 @@ class TetrisApp(object):
                            (self.stone_x, self.stone_y)):
             self.number_of_games += 1
             self.gameover = True
-            on_gameover(self)
 
     def check_top_rows(self):
         if rows > 20 :
@@ -281,7 +280,7 @@ class TetrisApp(object):
         self.level = 1
         self.score = 0
         self.lines = 0
-        pygame.time.set_timer(pygame.USEREVENT+1, 1000)
+        pygame.time.set_timer(pygame.USEREVENT+1, int(1000 * (30 / maxfps)))
         self.run()
 
     def disp_msg(self, msg, topleft):
