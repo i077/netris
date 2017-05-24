@@ -257,7 +257,8 @@ class TetrisApp(object):
                            (self.stone_x, self.stone_y)) or self.check_top_rows():
             self.number_of_games += 1
             self.gameover = True
-            on_gameover(self)
+            self.init_game()
+            # on_gameover(self)
 
     def check_top_rows(self):
         if rows > 20 :
@@ -267,6 +268,7 @@ class TetrisApp(object):
         return False
 
     def init_game(self):
+        self.gameover = False
         self.board = new_board()
         self.new_stone()
         self.game_memory = []
@@ -426,6 +428,7 @@ class TetrisApp(object):
         return self.prep_board(self.board, self.stone)
 
     def one_hot_to_inputs(self, one_hot):
+        # print(one_hot)
         key = ''
         keys = ['LEFT', 'RIGHT', 'd', 'f']
         if 1 not in one_hot:
