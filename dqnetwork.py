@@ -1,12 +1,13 @@
 """
 Using Deep-Q learning to train a machine to play Tetris.
 """
-import tetris
+import threading
 import tensorflow as tf
 import tflearn
 import numpy as np
 import time
 import random
+import tetris
 
 # TRAINING PARAMETERS
 # -------------------
@@ -17,7 +18,7 @@ num_actions = 5
 # Path to saved network model
 model_path = 'dqn_model.tflearn.ckpt'
 # Number of actor-learner threads
-n_threads = 8
+n_threads = 1
 # Training steps
 T_MAX = 8e8
 # Current step
@@ -37,6 +38,8 @@ anneal_epsilon_timesteps = 4e5
 # Checkpoint data
 checkpoint_interval = 2000
 checkpoint_path = 'dqn_learning.tflearn.ckpt'
+# Number of episodes to run when testing
+num_eval_episodes = 100
 
 # DEEP Q NETWORK
 # --------------
@@ -44,11 +47,12 @@ checkpoint_path = 'dqn_learning.tflearn.ckpt'
 # a list of q-values for each action.
 def build_model():
     # Establish inputs
-    inputs = tf.placeholder(tf.float32, [None, 20, 10, replay_minibatch])
+    inputs = tf.placeholder(tf.float32, [None, 200])
     # Build network
-    net = tf.fully_connected(inputs, 128, activation='relu')
-    net = tf.fully_connected(inputs, 256, activation='relu')
-    net = tf.fully_connected(inputs, 128, activation='relu')
+    net = tflearn.input_data(placeholder=inputs)
+    net = tflearn.fully_connected(net, 128, activation='relu')
+    net = tflearn.fully_connected(net, 256, activation='relu')
+    net = tflearn.fully_connected(net, 128, activation='relu')
     q_vals = tflearn.fully_connected(net, num_actions)
     # Return inputs and q-values
     return inputs, q_vals
@@ -60,7 +64,7 @@ def build_model():
 def get_final_epsilon():
     final_vals = np.array([1, 0.01, 0.5])
     probabilities = np.array([0.4, 0.3, 0.3])
-    return np.random_choice(final_vals, 1, p=list(probabilities))[0]
+    return np.random.choice(final_vals, 1, p=list(probabilities))[0]
 
 # Async actor-learner thread, 1-step Q-learning
 def actor_learner_thread(thread_id, env, session, graph_ops, saver):
@@ -82,6 +86,9 @@ def actor_learner_thread(thread_id, env, session, graph_ops, saver):
     t = 0
 
     while T < T_MAX:
+        # Start new game
+        env.start_game()
+
         # Get initial state
         s_t = env.readboard(env.prep_current_board())
         state_terminal = False
@@ -106,12 +113,12 @@ def actor_learner_thread(thread_id, env, session, graph_ops, saver):
             # Reduce ϵ
             if epsilon > final_epsilon:
                 epsilon -= (start_epsilon - final_epsilon) / anneal_epsilon_timesteps
-            
+
             # Take action and recieve new state and reward
-            s_t1, r_t, ep, state_terminal = env.step_act(a_t)
+            s_t1, r_t, state_terminal = env.step_act(a_t)
 
             # Accumulate gradients
-            target_q_vals_t = target_q_vals.eval(session=session, feed_dict={s: [s_t1]})
+            target_q_vals_t = target_q_vals.eval(session=session, feed_dict={target_s: [s_t1]})
             if state_terminal:
                 y_batch.append(r_t)
             else:
@@ -126,14 +133,14 @@ def actor_learner_thread(thread_id, env, session, graph_ops, saver):
             t += 1
             ep_t += 1
             ep_r += r_t
-            ep_avg_max_q = np.max(readout_t)
+            ep_avg_max_q = np.max(q_vals_t)
 
             # Update target network if necessary
             if T % target_reset_freq == 0:
                 session.run(reset_target_network_params)
 
             # Update current network if necessary
-            if t % grad_update_freq == 0 or terminal:
+            if t % grad_update_freq == 0 or state_terminal:
                 if s_batch:
                     session.run(grad_update, feed_dict={y: y_batch,
                                                         s: s_batch,
@@ -148,7 +155,7 @@ def actor_learner_thread(thread_id, env, session, graph_ops, saver):
                 saver.save(session, checkpoint_path, global_step=t)
 
             # At end of episode, print stats
-            if terminal:
+            if state_terminal:
                 print("Thread {0} - T: {1}, R: {2}, Qmax: {3}, Eps = {4}, Eps progress: {5}"
                       .format(thread_id, t, ep_r, ep_avg_max_q / float(ep_t), epsilon,
                               t / float(anneal_epsilon_timesteps)))
@@ -179,7 +186,59 @@ def build_graph():
     optimizer = tf.train.RMSPropOptimizer(learning_rate)
     update = optimizer.minimize(cost, var_list=network_params)
 
-    return s, q_vals, target_s, target_q_vals, reset_target_network_params, a, y, grad_update
+    return s, q_vals, target_s, target_q_vals, reset_target_network_params, a, y, update
+
+# Train the model
+def train(session, graph_ops, saver):
+    # Set up games
+    games = [tetris.TetrisApp() for i in range(n_threads)]
+
+    # Initialize session
+    session.run(tf.initialize_all_variables())
+
+    # Start actor_learner threads
+    actor_learner_threads = \
+            [threading.Thread(target=actor_learner_thread,
+                              args=(thread_id, games[thread_id], session,
+                              graph_ops, saver))
+             for thread_id in range(n_threads)]
+    for thread in actor_learner_threads:
+        thread.start()
+        time.sleep(0.01)
+        thread.join()
+
+# Evaluate the model
+def evaluate(session, graph_ops, saver):
+    # Restore model
+    saver.restore(session, model_path)
+    print("Restored from {0}".format(model_path))
+    game = tetris.TetrisApp()
+    s, q_vals, _, _, _, _, _, _ = graph_ops
+
+    # Start evaluating episodes
+    for i in xrange(num_eval_episodes):
+        s_t = game.readboard(game.prep_current_board())
+        ep_r = 0
+        state_terminal = False
+        while not state_terminal:
+            q_vals_t = q_vals.eval(session=session, feed_dict={s: [s_t]})
+            action_index = np.argmax(q_vals_t)
+            a_t = np.zeros([num_actions])
+            a_t[action_index] = 1
+            s_t1, r_t, state_terminal = game.step_act(a_t)
+            ep_r += r_t
+        print("Episode {0} - Reward: {1}".format(i, ep_r))
+    game.quit()
+
+def main(_):
+    with tf.Session() as session:
+        graph_ops = build_graph()
+        saver = tf.train.Saver()
+
+        if test:
+            evaluate(session, graph_ops, saver)
+        else:
+            train(session, graph_ops, saver)
 
 if __name__ == '__main__':
-    game.run()
+    tf.app.run()

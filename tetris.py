@@ -282,6 +282,7 @@ class TetrisApp(object):
         self.score = 0
         self.lines = 0
         pygame.time.set_timer(pygame.USEREVENT+1, 1000)
+        self.run()
 
     def disp_msg(self, msg, topleft):
         x,y = topleft
@@ -440,11 +441,11 @@ class TetrisApp(object):
             for j, cell in enumerate(row[1:-1]):
                 if cell:
                     if cell == 10 :
-                        new_val = 1
+                        new_val = 1.
                     else:
                         new_val = 0.5
                 else:
-                    new_val = 0
+                    new_val = 0.
                 new_board.append(new_val)
         return new_board
 
