@@ -244,6 +244,8 @@ class TetrisApp(object):
 
         self.prev_filled = 0
         self.filled = 0
+        self.prev_holes = 0
+        self.holes = 0
 
         self.init_game()
 
@@ -285,7 +287,10 @@ class TetrisApp(object):
         self.lines = 0
         self.filled = 0
         self.prev_filled = 0
-        self.drop_timer = 7
+        self.holes = 0
+        self.prev_holes = 0
+        # self.drop_timer = 7
+        self.drop_timer = 360
         self.drop_frame = 0
         # pygame.time.set_timer(pygame.USEREVENT+1, int(1000 * (30 / maxfps)))
         self.run()
@@ -394,9 +399,14 @@ class TetrisApp(object):
                 self.add_cl_lines(self.cleared_rows)
 
                 self.prev_filled = self.filled
-                self.filled = self.filled_pct()
+                self.prev_holes = self.holes
+                self.filled, self.holes = self.eval_board()
                 self.d_filled = self.filled - self.prev_filled
+                self.d_holes = self.prev_holes - self.holes
+                #print(self.prev_holes, self.holes, self.d_holes)
                 #print(self.prev_filled, self.filled, self.filled-self.prev_filled)
+                #print(self.d_filled + self.d_holes/10)
+
 
                 return True
         return False
@@ -473,16 +483,24 @@ class TetrisApp(object):
         if key:
             self.key_actions[key]()
 
-    def filled_pct(self):
+    def eval_board(self):
         bd = self.prep_current_board()
         filled = 0.
         height = -1.
+        holes = 0.
         for i, row in enumerate(bd[2:-1]):
             for j, cell in enumerate(row[1:-1]):
                 if 0<cell and cell < 9:
-                    filled += i / (rows - 2)
+                    filled += 1
                     if height == -1:
                         height = i
+                if height > 0 and i > height:
+                    if cell == 0:
+                        for y in range(2, i+2):
+                            if bd[y][j+1] > 0 and bd[y][j+1] < 9:
+                                holes += 1
+                                #print("Hole at ({}, {})".format(i, j+1))
+                                break
         if height == -1:
             return 0.
         height = rows - 2 - height
@@ -491,8 +509,7 @@ class TetrisApp(object):
         total = height * (cols - 2)
         pct = filled/total
         #print(filled, height, total, pct)
-        return pct
-
+        return pct, holes
 
 
     def run(self):
@@ -576,10 +593,11 @@ Press space to continue""" % self.score)
     def step_act(self, one_hot):
         self.one_hot_to_inputs(one_hot)
         self.step()
-        return (self.readboard(self.prep_current_board()), self.cleared_lines + self.d_filled/3, self.gameover)
+        return (self.readboard(self.prep_current_board()), (self.cleared_lines + (self.d_filled + self.d_holes/10))/4, self.gameover)
 
 if __name__ == '__main__':
     App = TetrisApp()
     App.run()
     while 1:
-        App.step_act([0,0,0,0,1])
+        # App.step_act([0,0,0,0,1])
+        App.step()

@@ -48,6 +48,7 @@ __pycache__/
 *.npy
 *.ckpt
 learningdata/
+learningsummary/
 
 # Vim swapfiles
 *.swp
