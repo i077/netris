@@ -244,8 +244,10 @@ class TetrisApp(object):
 
         self.prev_filled = 0
         self.filled = 0
+        self.d_filled = 0
         self.prev_holes = 0
         self.holes = 0
+        self.d_holes = 0
 
         self.init_game()
 
@@ -568,6 +570,7 @@ Press space to continue""" % self.score)
         pygame.display.update()
 
         self.d_filled = 0
+        self.d_holes = 0
 
         self.drop_frame += 1
         if self.drop_frame >= self.drop_timer:
@@ -599,5 +602,6 @@ if __name__ == '__main__':
     App = TetrisApp()
     App.run()
     while 1:
-        # App.step_act([0,0,0,0,1])
-        App.step()
+        a, b, c = App.step_act([0,0,0,0,1])
+        if b: print(b)
+        #App.step()
