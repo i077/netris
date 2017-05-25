@@ -291,8 +291,7 @@ class TetrisApp(object):
         self.prev_filled = 0
         self.holes = 0
         self.prev_holes = 0
-        # self.drop_timer = 7
-        self.drop_timer = 360
+        self.drop_timer = 7
         self.drop_frame = 0
         # pygame.time.set_timer(pygame.USEREVENT+1, int(1000 * (30 / maxfps)))
         self.run()
