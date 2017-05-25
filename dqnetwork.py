@@ -17,7 +17,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 test = False
 # Resume training from checkpoint?
 resume = False
-# Number of actions game takes (size of action one_hot0
+# Number of actions game takes (size of action one_hot)
 num_actions = 5
 # Path to saved network model
 model_path = './learningdata/dqn_learning.tflearn.ckpt-206000'
@@ -37,13 +37,22 @@ target_reset_freq = 40000
 learning_rate = 5e-3
 # Discount rate of future rewards
 y_rate = 0.9
+# Number of steps in the future to calculate max discounted future reward
+n_steps = 4
 # Number of steps to change ϵ to final val
 anneal_epsilon_timesteps = 4e6
 # Checkpoint data
 checkpoint_interval = 2000
-checkpoint_path = './learningdata/dqn_learning.tflearn.ckpt'
+checkpoint_path = './learningdata/dqn_learning_tb.tflearn.ckpt'
 # Number of episodes to run when testing
 num_eval_episodes = 100
+# Summary data
+summary_dir = './learningsummary/'
+summary_interval = 100
+writer_summary = tf.summary.FileWriter
+merge_all_summaries = tf.summary.merge_all
+histogram_summary = tf.summary.histogram
+scalar_summary = tf.summary.scalar
 
 # DEEP Q NETWORK
 # --------------
@@ -71,10 +80,11 @@ def get_final_epsilon():
     return np.random.choice(final_vals, 1, p=list(probabilities))[0]
 
 # Async actor-learner thread, 1-step Q-learning
-def actor_learner_thread(thread_id, env, session, graph_ops, saver):
+def actor_learner_thread(thread_id, env, session, graph_ops, summary_ops, saver):
     # Step counter and threshold should be global
     global T_MAX, T
     s, q_vals, target_s, target_q_vals, reset_target_network_params, a, y, grad_update = graph_ops
+    summary_placeholders, assign_ops, summary_op = summary_ops
 
     # Initialize Q network gradients
     s_batch = []
@@ -160,6 +170,9 @@ def actor_learner_thread(thread_id, env, session, graph_ops, saver):
 
             # At end of episode, print stats
             if state_terminal:
+                stats = [ep_r, ep_avg_max_q/float(ep_t), epsilon]
+                for i in range(len(stats)):
+                    session.run(assign_ops[i], {summary_placeholders[i]: float(stats[i])})
                 print("Thread {} - T: {} ({}),\t R: {:.4f},\t Qmax: {:.4e},\t Eps = {:.4f},\t Eps progress: {:.2%}"
                       .format(thread_id, T, t, ep_r, ep_avg_max_q / float(ep_t), epsilon,
                               t / float(anneal_epsilon_timesteps)))
@@ -192,6 +205,26 @@ def build_graph():
 
     return s, q_vals, target_s, target_q_vals, reset_target_network_params, a, y, update
 
+# Set up summary ops for tensorboard
+def build_summaries():
+    ep_r = tf.Variable(0.)
+    scalar_summary("Reward", ep_r)
+    ep_avg_max_q = tf.Variable(0.)
+    scalar_summary("Qmax", ep_avg_max_q)
+    epsilon = tf.Variable(0.)
+    scalar_summary("Epsilon", epsilon)
+
+    # Use placeholders to assign summary values,
+    # assign doesn't need to be called by every thread.
+    summary_vars = [ep_r, ep_avg_max_q, epsilon]
+    summary_placeholders = [tf.placeholder("float")
+                            for i in range(len(summary_vars))]
+    assign_ops = [summary_vars[i].assign(summary_placeholders[i])
+                  for i in range(len(summary_vars))]
+    summary_op = merge_all_summaries()
+
+    return summary_placeholders, assign_ops, summary_op
+
 # Train the model
 def train(session, graph_ops, saver):
     if resume:
@@ -199,19 +232,36 @@ def train(session, graph_ops, saver):
         print("Restored from {0}".format(model_path))
     # Set up games
     games = [tetris.TetrisApp() for i in range(n_threads)]
+    _, _, _, _, reset_target_network_params, _, _, _ = graph_ops
+
+    summary_ops = build_summaries()
+    summary_op = summary_ops[-1]
 
     # Initialize session
     session.run(tf.global_variables_initializer())
+    writer = writer_summary(summary_dir, session.graph)
+
+    # Initialize target network weights
+    session.run(reset_target_network_params)
 
     # Start actor_learner threads
     actor_learner_threads = \
             [threading.Thread(target=actor_learner_thread,
                               args=(thread_id, games[thread_id], session,
-                              graph_ops, saver))
+                              graph_ops, summary_ops, saver))
              for thread_id in range(n_threads)]
     for thread in actor_learner_threads:
         thread.start()
         time.sleep(0.01)
+
+    # Write summary stats
+    last_summary_time = 0
+    while True:
+        now = time.time()
+        if now - last_summary_time > summary_interval:
+            summary_str = session.run(summary_op)
+            writer.add_summary(summary_str, float(T))
+            last_summary_time = now
 
     for thread in actor_learner_threads:
         thread.join()
