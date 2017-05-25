@@ -43,6 +43,7 @@ from random import randrange as rand
 import pygame, sys
 from copy import deepcopy
 from random import randrange, randint
+import numpy as np
 
 # The configuration
 cell_size =	18
@@ -469,6 +470,11 @@ class TetrisApp(object):
                     new_val = 0.
                 new_board.append(new_val)
         return new_board
+    
+    def readboard2D(self):
+        new_board = self.readboard(self.prep_current_board())
+        new_board = np.reshape(new_board, (20, 10, 1))
+        return new_board
 
     def one_hot_to_inputs(self, one_hot):
         key = ''
@@ -592,7 +598,7 @@ Press space to continue""" % self.score)
     def step_act(self, one_hot):
         self.one_hot_to_inputs(one_hot)
         self.step()
-        return (self.readboard(self.prep_current_board()), (self.cleared_lines + (self.d_filled + self.d_holes/10))/4, self.gameover)
+        return ([self.readboard2D()], (self.cleared_lines + (self.d_filled + self.d_holes/10))/4, self.gameover)
 
 if __name__ == '__main__':
     App = TetrisApp()

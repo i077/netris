@@ -40,7 +40,7 @@ y_rate = 0.9
 # Number of steps in the future to calculate max discounted future reward
 n_steps = 4
 # Number of steps to change ϵ to final val
-anneal_epsilon_timesteps = 4e6
+anneal_epsilon_timesteps = 4e5
 # Checkpoint data
 checkpoint_interval = 2000
 checkpoint_path = './learningdata/dqn_learning_tb.tflearn.ckpt'
@@ -60,11 +60,11 @@ scalar_summary = tf.summary.scalar
 # a list of q-values for each action.
 def build_model():
     # Establish inputs
-    inputs = tf.placeholder(tf.float32, [None, 200])
+    inputs = tf.placeholder(tf.float32, [None, 20, 10, 1])
     # Build network
     net = tflearn.input_data(placeholder=inputs)
-    net = tflearn.fully_connected(net, 128, activation='relu')
-    net = tflearn.fully_connected(net, 256, activation='relu')
+    net = tflearn.conv_2d(net, 32, 8, strides=4, activation='relu')
+    net = tflearn.conv_2d(net, 64, 4, strides=2, activation='relu')
     net = tflearn.fully_connected(net, 128, activation='relu')
     q_vals = tflearn.fully_connected(net, num_actions)
     # Return inputs and q-values
@@ -104,7 +104,7 @@ def actor_learner_thread(thread_id, env, session, graph_ops, summary_ops, saver)
         env.start_game()
 
         # Get initial state
-        s_t = env.readboard(env.prep_current_board())
+        s_t = env.readboard2D()
         state_terminal = False
 
         # Set per-episode counters
