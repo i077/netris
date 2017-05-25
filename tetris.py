@@ -601,7 +601,7 @@ Press space to continue""" % self.score)
     def step_act(self, one_hot):
         self.one_hot_to_inputs(one_hot)
         self.step()
-        return ([self.readboard2D()], (self.cleared_lines + (self.d_filled + self.d_holes/10))/4, self.gameover)
+        return (self.readboard2D(), (self.cleared_lines + (self.d_filled + self.d_holes/10))/4, self.gameover)
 
 if __name__ == '__main__':
     App = TetrisApp()

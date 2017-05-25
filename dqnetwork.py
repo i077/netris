@@ -166,7 +166,11 @@ def actor_learner_thread(thread_id, env, session, graph_ops, summary_ops, saver)
 
             # Save model progress to disk
             if t % checkpoint_interval == 0:
-                saver.save(session, checkpoint_path, global_step=t)
+                try:
+                    saver.save(session, checkpoint_path, global_step=t)
+                except:
+                    time.sleep(0.25)
+                    saver.save(session, checkpoint_path, global_step=t)
 
             # At end of episode, print stats
             if state_terminal:
