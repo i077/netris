@@ -160,8 +160,8 @@ def actor_learner_thread(thread_id, env, session, graph_ops, saver):
 
             # At end of episode, print stats
             if state_terminal:
-                print("Thread {0} - T: {1},\t R: {2:.4f},\t Qmax: {3:.4e},\t Eps = {4:.4f},\t Eps progress: {5:.2%}"
-                      .format(thread_id, t, ep_r, ep_avg_max_q / float(ep_t), epsilon,
+                print("Thread {} - T: {} ({}),\t R: {:.4f},\t Qmax: {:.4e},\t Eps = {:.4f},\t Eps progress: {:.2%}"
+                      .format(thread_id, T, t, ep_r, ep_avg_max_q / float(ep_t), epsilon,
                               t / float(anneal_epsilon_timesteps)))
                 break
 

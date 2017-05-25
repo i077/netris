@@ -48,7 +48,7 @@ from random import randrange, randint
 cell_size =	18
 cols =		12
 rows =		22
-maxfps = 	2000
+maxfps = 	5000
 
 keys_y = 100
 keys_x = 100
@@ -285,7 +285,9 @@ class TetrisApp(object):
         self.lines = 0
         self.filled = 0
         self.prev_filled = 0
-        pygame.time.set_timer(pygame.USEREVENT+1, int(1000 * (30 / maxfps)))
+        self.drop_timer = 7
+        self.drop_frame = 0
+        # pygame.time.set_timer(pygame.USEREVENT+1, int(1000 * (30 / maxfps)))
         self.run()
 
     def disp_msg(self, msg, topleft):
@@ -550,10 +552,15 @@ Press space to continue""" % self.score)
 
         self.d_filled = 0
 
+        self.drop_frame += 1
+        if self.drop_frame >= self.drop_timer:
+            self.drop(False)
+            self.drop_frame = 0
+
         for event in pygame.event.get():
-            if event.type == pygame.USEREVENT+1:
-                self.drop(False)
-            elif event.type == pygame.QUIT:
+            # if event.type == pygame.USEREVENT+1:
+            #     self.drop(False)
+            if event.type == pygame.QUIT:
                 self.quit()
             elif event.type == pygame.KEYDOWN:
                 for key in self.key_actions:
@@ -564,7 +571,7 @@ Press space to continue""" % self.score)
         self.cleared_rows = 0
 
         
-        self.dont_burn_my_cpu.tick(maxfps)
+        # self.dont_burn_my_cpu.tick(maxfps)
 
     def step_act(self, one_hot):
         self.one_hot_to_inputs(one_hot)
