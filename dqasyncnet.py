@@ -14,13 +14,13 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # TRAINING PARAMETERS
 # -------------------
 # Are we training or testing?
-test = False
+test = True
 # Resume training from checkpoint?
 resume = False
 # Number of actions game takes (size of action one_hot)
 num_actions = 5
 # Path to saved network model
-model_path = './learningdata/dqn_learning.tflearn.ckpt-206000'
+model_path = './learningdata/dqn_learning_tb.tflearn.ckpt-4180000'
 # Number of actor-learner threads
 n_threads = 8
 # Training steps
@@ -34,7 +34,7 @@ grad_update_freq = 5
 # Step to reset target network
 target_reset_freq = 40000
 # Learning rate
-learning_rate = 5e-3
+learning_rate = 2e-2
 # Discount rate of future rewards
 y_rate = 0.9
 # Number of steps in the future to calculate max discounted future reward
@@ -281,7 +281,7 @@ def evaluate(session, graph_ops, saver):
     # Start evaluating episodes
     for i in range(num_eval_episodes):
         game.start_game()
-        s_t = game.readboard(game.prep_current_board())
+        s_t = game.readboard2D()
         ep_r = 0
         state_terminal = False
         while not state_terminal:

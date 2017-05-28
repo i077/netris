@@ -47,8 +47,7 @@ __pycache__/
 # Generated models
 *.npy
 *.ckpt
-learningdata/
-learningsummary/
+learning*/
 
 # Vim swapfiles
 *.swp
@@ -58,3 +57,4 @@ mnist-data/
 
 # Other stuff we don't want tracked
 notes.md
+.vscode/

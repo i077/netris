@@ -475,7 +475,7 @@ class TetrisApp(object):
     
     def readboard2D(self):
         new_board = self.readboard(self.prep_current_board())
-        new_board = np.reshape(new_board, (20, 10, 1))
+        new_board = np.reshape(new_board, (20, 10))
         return new_board
 
     def one_hot_to_inputs(self, one_hot):
@@ -601,7 +601,8 @@ Press space to continue""" % self.score)
     def step_act(self, one_hot):
         self.one_hot_to_inputs(one_hot)
         self.step()
-        return (self.readboard2D(), (self.cleared_lines + (self.d_filled + self.d_holes/10))/4, self.gameover)
+        terminal_punish = -20 if self.gameover else 0
+        return (self.readboard2D(), (10*self.cleared_lines + (self.d_filled + self.d_holes/10))/4 + terminal_punish, self.gameover)
 
 if __name__ == '__main__':
     App = TetrisApp()
