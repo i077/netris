@@ -498,7 +498,7 @@ class TetrisApp(object):
     def outputboard(self):
         datafile = open('playerdata.dat', 'ab')
         bd = self.readboard(self.prep_current_board())
-        np.savetxt(datafile, (bd, self.action_one_hot), fmt='%s')
+        np.savetxt(datafile, [bd, self.action_one_hot], fmt='%s')
         datafile.close()
 
 
