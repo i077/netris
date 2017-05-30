@@ -47,6 +47,7 @@ __pycache__/
 # Generated models
 *.npy
 *.ckpt
+*.dat
 learningdata/
 learningsummary/
 

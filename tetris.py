@@ -49,11 +49,11 @@ import numpy as np
 cell_size =	18
 cols =		12
 rows =		22
-maxfps = 	5000
+maxfps =    20	
 
 keys_y = 100
 keys_x = 100
-keys_spacing = 20
+keys_spacing = 16
 
 colors = [
 (0,   0,   0  ),
@@ -250,9 +250,13 @@ class TetrisApp(object):
         self.holes = 0
         self.d_holes = 0
 
+        #np.save('playerdata', [])
+        self.action_one_hot = [0, 0, 0, 0, 0]
+
         self.init_game()
 
     def new_stone(self):
+        self.drop_timer = 7
         self.stone = self.next_stone[:]
         self.stone_index = self.next_stone_index
         self.stone_variation_index = self.next_stone_variation_index
@@ -273,6 +277,7 @@ class TetrisApp(object):
                            (self.stone_x, self.stone_y)):
             self.number_of_games += 1
             self.gameover = True
+            self.start_game()
 
     def check_top_rows(self):
         if rows > 20 :
@@ -351,16 +356,21 @@ class TetrisApp(object):
             #pygame.time.set_timer(pygame.USEREVENT+1, newdelay)
 
     def move(self, delta_x):
-        if not self.gameover and not self.paused:
+         if not self.gameover and not self.paused:
             new_x = self.stone_x + delta_x
+            if delta_x == 1: # right
+                self.action_one_hot[1] = 1
+            elif delta_x == -1: # left
+                self.action_one_hot[0] = 1
+
             '''
             if new_x < 0:
                     #new_x = 0
-                empty = True
+                 empty = True
                 for i in range(len(tetris_shapes[self.stone_index]) -1):
                     col = -(1 + new_x)
                     if tetris_shapes[self.stone_index][self.stone_variation_index][i][col] != 0:
-                        empty = False
+                         empty = False
                         break
                 if not empty:
                     new_x = self.stone_x
@@ -377,6 +387,9 @@ class TetrisApp(object):
         sys.exit()
 
     def drop(self, manual):
+        if manual:
+            self.drop_timer = 1
+            return True
         if not self.gameover and not self.paused:
             self.score += 1 if manual else 0
             self.stone_y += 1
@@ -402,7 +415,7 @@ class TetrisApp(object):
 
                 self.prev_filled = self.filled
                 self.prev_holes = self.holes
-                self.filled, self.holes = self.eval_board()
+                #self.filled, self.holes = self.eval_board()
                 self.d_filled = self.filled - self.prev_filled
                 self.d_holes = self.prev_holes - self.holes
                 #print(self.prev_holes, self.holes, self.d_holes)
@@ -419,11 +432,15 @@ class TetrisApp(object):
                 pass
 
     def rotate_stone(self, dir):
-        if not self.gameover and not self.paused:
+         if not self.gameover and not self.paused:
             # new_stone = rotate_clockwise(self.stone)
+            if dir==1: # f
+                self.action_one_hot[3] = 1
+            elif dir==-1: #d
+                self.action_one_hot[2] = 1
             new_stone_variation_index = go_to_next_index(tetris_shapes[self.stone_index], self.stone_variation_index, dir)
             if not check_collision(self.board,
-                                   tetris_shapes[self.stone_index][new_stone_variation_index],
+                                    tetris_shapes[self.stone_index][new_stone_variation_index],
                                    (self.stone_x, self.stone_y)):
                 self.stone = tetris_shapes[self.stone_index][new_stone_variation_index]
                 self.stone_variation_index = new_stone_variation_index
@@ -441,7 +458,7 @@ class TetrisApp(object):
         self.paused = not self.paused
 
     def start_game(self):
-        if self.gameover:
+         if self.gameover:
             self.init_game()
             self.gameover = False
 
@@ -477,6 +494,13 @@ class TetrisApp(object):
         new_board = self.readboard(self.prep_current_board())
         new_board = np.reshape(new_board, (20, 10, 1))
         return new_board
+
+    def outputboard(self):
+        datafile = open('playerdata.dat', 'ab')
+        bd = self.readboard(self.prep_current_board())
+        np.savetxt(datafile, (bd, self.action_one_hot), fmt='%s')
+        datafile.close()
+
 
     def one_hot_to_inputs(self, one_hot):
         key = ''
@@ -545,6 +569,7 @@ class TetrisApp(object):
         self.one_hot_to_inputs(self.action)
 
     def step(self):
+        self.action_one_hot = [0, 0, 0, 0, 0]
         for i in range(rows):
             self.board[i][0] = 9
             self.board[i][cols - 1] = 9
@@ -565,7 +590,7 @@ Press space to continue""" % self.score)
                     2))
                 self.disp_msg("Score: %d\n\nLevel: %d\
 \nLines: %d" % (self.score, self.level, self.lines),
-                    (self.rlim+cell_size, cell_size*5))
+                     (self.rlim+cell_size, cell_size*5))
                 self.draw_matrix(self.bground_grid, (0,0))
                 self.draw_matrix(self.board, (0,0))
                 self.draw_matrix(self.stone,
@@ -588,15 +613,19 @@ Press space to continue""" % self.score)
             if event.type == pygame.QUIT:
                 self.quit()
             elif event.type == pygame.KEYDOWN:
-                for key in self.key_actions:
+                 for key in self.key_actions:
                     if event.key == eval("pygame.K_"
                     +key):
                         self.key_actions[key]()
+        if 1 not in self.action_one_hot:
+            self.action_one_hot[4] = 1
+        self.outputboard()
+        #print(self.action_one_hot)
         self.cleared_lines = self.cleared_rows
         self.cleared_rows = 0
 
         
-        # self.dont_burn_my_cpu.tick(maxfps)
+        self.dont_burn_my_cpu.tick(maxfps)
 
     def step_act(self, one_hot):
         self.one_hot_to_inputs(one_hot)
@@ -608,5 +637,5 @@ if __name__ == '__main__':
     App.run()
     while 1:
         a, b, c = App.step_act([0,0,0,0,1])
-        if b: print(b)
+        #if b: print(b)
         #App.step()
