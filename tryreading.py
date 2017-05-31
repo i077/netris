@@ -16,3 +16,4 @@ for line in data:
         actions.append(a)
     lnum += 1
 print(states[0], actions[0])
+data.close()
