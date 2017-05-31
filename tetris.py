@@ -45,6 +45,8 @@ from copy import deepcopy
 from random import randrange, randint
 import numpy as np
 
+gather_data = False
+
 # The configuration
 cell_size =	18
 cols =		12
@@ -217,6 +219,8 @@ def new_board():
 class TetrisApp(object):
     def __init__(self):
         pygame.init()
+    
+        gather_data = False
         # pygame.key.set_repeat(250,25)
         self.width = cell_size*(cols+6)
         self.height = cell_size*rows
@@ -619,7 +623,8 @@ Press space to continue""" % self.score)
                         self.key_actions[key]()
         if 1 not in self.action_one_hot:
             self.action_one_hot[4] = 1
-        self.outputboard()
+        if(gather_data):
+            self.outputboard()
         #print(self.action_one_hot)
         self.cleared_lines = self.cleared_rows
         self.cleared_rows = 0
@@ -634,8 +639,10 @@ Press space to continue""" % self.score)
 
 if __name__ == '__main__':
     App = TetrisApp()
+    gather_data = True
     App.run()
     while 1:
+        gather_data = True
         a, b, c = App.step_act([0,0,0,0,1])
         #if b: print(b)
         #App.step()

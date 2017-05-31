@@ -1,6 +1,7 @@
 import os
 import tensorflow as tf
 import numpy as np
+import tetris
 from tensorflow.examples.tutorials.mnist import input_data
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -26,15 +27,17 @@ for line in data:
 # print(states[1], actions[1])
 data.close()
 
-n_nodes_hl1 = 512
-n_nodes_hl2 = 1024
-n_nodes_hl3 = 512
+n_nodes_hl1 = 1024
+n_nodes_hl2 = 1536
+n_nodes_hl3 = 1024
 
 n_classes = 5
 batch_size = 100
 
 x = tf.placeholder('float', [None, 200])
 y = tf.placeholder('float')
+
+# saver = tf.train.Saver()
 
 def neural_network_model(data):
     hidden_1_layer = {'weights':tf.Variable(tf.random_normal([200, n_nodes_hl1])),
@@ -67,10 +70,10 @@ def train_neural_network(x):
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y))
     optimizer = tf.train.AdamOptimizer().minimize(cost)
 
-    hm_epochs = 50
+    hm_epochs = 40
 
     with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
         for epoch in range(hm_epochs):
             epoch_loss = 0
             batch_index = 0
@@ -89,5 +92,17 @@ def train_neural_network(x):
         accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
         # print('Accuracy:', accuracy.eval({x: mnist.test.images, y: mnist.test.labels}))
         print('Accuracy:', accuracy.eval({x: states, y: actions}))
+    
+        game = tetris.TetrisApp()
+        game.init_game()
+        while 1:
+            state = game.readboard(game.prep_current_board())
+            action = prediction.eval(session=sess,feed_dict={x: [state]})
+            print(action)
+            max_index = np.argmax(action)
+            action = [0, 0, 0, 0, 0]
+            action[max_index] = 1
+            # print(action)
+            _, __, ___ = game.step_act(action)
 
 train_neural_network(x)
