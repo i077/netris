@@ -8,7 +8,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 #mnist = input_data.read_data_sets("mnist-data/", one_hot=True)
 
 
-data = open('playerdata.dat', 'r')
+data = open('adjustedbackup.dat', 'r')
 lnum = 0
 states = []
 actions = []
@@ -27,9 +27,9 @@ for line in data:
 # print(states[1], actions[1])
 data.close()
 
-n_nodes_hl1 = 1024
-n_nodes_hl2 = 1536
-n_nodes_hl3 = 1024
+n_nodes_hl1 = 512
+n_nodes_hl2 = 512
+n_nodes_hl3 = 512
 
 n_classes = 5
 batch_size = 100
@@ -102,6 +102,10 @@ def train_neural_network(x):
             max_index = np.argmax(action)
             action = [0, 0, 0, 0, 0]
             action[max_index] = 1
+            # action[max_index] = 0
+            # max_index = np.argmax(action)
+            # action = [0, 0, 0, 0, 0]
+            # action[max_index] = 1
             # print(action)
             _, __, ___ = game.step_act(action)
 

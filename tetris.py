@@ -488,7 +488,7 @@ class TetrisApp(object):
                     if cell == 10 :
                         new_val = 1.
                     else:
-                        new_val = 0.5
+                        new_val = 0.8
                 else:
                     new_val = 0.
                 new_board.append(new_val)
