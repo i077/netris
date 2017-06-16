@@ -39,3 +39,23 @@ luac.out
 *.x86_64
 *.hex
 
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Generated models
+*.npy
+*.ckpt
+*.dat
+learningdata/
+learningsummary/
+
+# Vim swapfiles
+*.swp
+
+# Datasets
+mnist-data/
+
+# Other stuff we don't want tracked
+notes.md
